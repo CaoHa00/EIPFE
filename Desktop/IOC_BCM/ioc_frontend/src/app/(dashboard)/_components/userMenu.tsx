@@ -16,7 +16,7 @@ export default function UserMenu() {
         className="flex items-center gap-2 rounded-full bg-white/10 backdrop-blur px-4 py-2 text-sm font-medium hover:bg-white/20 transition"
       >
         <User2 className="h-4 w-4" />
-        <span>{user?.username ?? "User"}</span>
+        <span>{user?.fullname ?? "User"}</span>
         <ChevronDown
           className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
         />

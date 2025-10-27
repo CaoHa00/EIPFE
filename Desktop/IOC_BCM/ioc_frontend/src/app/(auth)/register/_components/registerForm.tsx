@@ -5,13 +5,14 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/app/context/auth-context";
-import { Mail, User, Lock, ArrowRight } from "lucide-react";
+import { Mail, User, Lock, ArrowRight, Phone } from "lucide-react";
+import axios from "axios";
 
 const schema = z.object({
-  username: z.string().min(2, "Username is too short"),
+  fullname: z.string().min(2, "Full name is too short"),
   email: z.string().email("Invalid email"),
   password: z.string().min(6, "At least 6 characters"),
-  // phonenumber: z.string().nonempty("Phone number is required"),
+  phonenumber: z.string().nonempty("Phone number is required"),
   // legalrep: z.string().nonempty("Legal representative is required"),
   // address: z.string().nonempty("Address is required"),
   // facilityname: z.string().nonempty("Facility name is required"),
@@ -29,7 +30,7 @@ const schema = z.object({
   // permitnumber: z.string().nonempty("Permit number is required"),
   // issuedate: z.string().nonempty("Issue date is required"),
   // isserorg: z.string().nonempty("Issuer organization is required"),
-  // permiffile: z.string().optional(),
+  // permitfile: z.string().optional(),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -41,6 +42,7 @@ export default function RegisterForm() {
   const {
     register,
     handleSubmit,
+    setError: setFieldError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
@@ -50,8 +52,36 @@ export default function RegisterForm() {
     try {
       await doRegister(values);
       setOk("Account created. Please log in.");
-    } catch (e: any) {
-      setError(e?.message ?? "Registration failed");
+    } catch (err: any) {
+      // axios structured error handling
+      if (axios.isAxiosError(err)) {
+        const data = err.response?.data;
+        // if backend returned field errors in `result`
+        const fieldErrors = data?.result as
+          | Array<{ field: string; message: string }>
+          | undefined;
+        if (Array.isArray(fieldErrors)) {
+          fieldErrors.forEach((fe) => {
+            // map backend field names to form names if necessary
+            // example: backend phoneNumber -> phonenumber form key
+            const formKey =
+              fe.field === "phoneNumber"
+                ? "phonenumber"
+                : fe.field === "fullName"
+                ? "fullname"
+                : fe.field;
+            setFieldError(formKey as any, {
+              type: "server",
+              message: fe.message,
+            });
+          });
+          return;
+        }
+        // fallback to global error message
+        setError(data?.message ?? err.message ?? "Registration failed");
+      } else {
+        setError(err?.message ?? "Registration failed");
+      }
     }
   };
 
@@ -60,15 +90,15 @@ export default function RegisterForm() {
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-sm font-medium text-white/90">
           <User className="h-4 w-4 opacity-80" />
-          <span>Username</span>
+          <span>Full Name</span>
         </label>
         <input
           className="block w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white placeholder-white/50 outline-none"
-          placeholder="yourusername"
-          {...register("username")}
+          placeholder="your full name"
+          {...register("fullname")}
         />
-        {errors.username && (
-          <p className="text-sm text-red-200">{errors.username.message}</p>
+        {errors.fullname && (
+          <p className="text-sm text-red-200">{errors.fullname.message}</p>
         )}
       </div>
 
@@ -79,11 +109,26 @@ export default function RegisterForm() {
         </label>
         <input
           className="block w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white placeholder-white/50 outline-none"
-          placeholder="you@example.com"
+          placeholder="becamex@example.com"
           {...register("email")}
         />
         {errors.email && (
           <p className="text-sm text-red-200">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm font-medium text-white/90">
+          <Phone className="h-4 w-4 opacity-80" />
+          <span>Phone Number</span>
+        </label>
+        <input
+          className="block w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-white placeholder-white/50 outline-none"
+          placeholder="your phone number"
+          {...register("phonenumber")}
+        />
+        {errors.phonenumber && (
+          <p className="text-sm text-red-200">{errors.phonenumber.message}</p>
         )}
       </div>
 

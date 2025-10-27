@@ -1,3 +1,4 @@
+// app/context/auth-context.tsx
 "use client";
 
 import React, {
@@ -8,114 +9,123 @@ import React, {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import { loginUser, registerUser } from "@/app/(auth)/services/auth";
+import type { NewUser } from "@/app/(auth)/types/user";
+import axios from "axios";
+import { toast } from "sonner";
+import FullScreenLoader from "../(auth)/_components/fullScreenLoader";
 
-export type AuthUser = { id: string; username: string; email: string };
+export type AuthUser = {
+  id: string;
+  fullname: string;
+  email: string;
+  phonenumber?: string | null;
+};
 
 type AuthContextType = {
   user: AuthUser | null;
   loading: boolean;
   login: (identifier: string, password: string) => Promise<void>;
-  register: (data: {
-    username: string;
-    email: string;
-    password: string;
-  }) => Promise<void>;
+  register: (data: NewUser) => Promise<void>;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const MOCK_USER = {
-  id: "1",
-  username: "enterprise",
-  email: "enterprise@becamex.com",
-  password: "demo123",
-};
-
-const USERS_KEY = "demo.users";
-const SESSION_KEY = "demo.session";
-
-function readUsers(): Array<typeof MOCK_USER> {
-  if (typeof window === "undefined") return [MOCK_USER];
-  const raw = localStorage.getItem(USERS_KEY);
-  if (!raw) return [MOCK_USER];
-  try {
-    const parsed = JSON.parse(raw) as Array<typeof MOCK_USER>;
-    // ensure the demo user always exists
-    const hasDemo = parsed.some((u) => u.email === MOCK_USER.email);
-    return hasDemo ? parsed : [...parsed, MOCK_USER];
-  } catch {
-    return [MOCK_USER];
-  }
-}
-
-function writeUsers(users: Array<typeof MOCK_USER>) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
+const SESSION_KEY = "session.user";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // boot session
   useEffect(() => {
-    const raw =
-      typeof window !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
-    if (raw) {
-      try {
-        setUser(JSON.parse(raw));
-      } catch {}
+    try {
+      const raw =
+        typeof window !== "undefined"
+          ? localStorage.getItem(SESSION_KEY)
+          : null;
+      if (raw) setUser(JSON.parse(raw));
+    } catch (err) {
+      console.debug("AuthProvider: failed to parse session", err);
+    } finally {
+      setLoading(false);
     }
-    // seed users on first load
-    if (typeof window !== "undefined" && !localStorage.getItem(USERS_KEY)) {
-      writeUsers([MOCK_USER]);
-    }
-    setLoading(false);
   }, []);
 
   const value = useMemo<AuthContextType>(
     () => ({
       user,
       loading,
+
+      // LOGIN: validate the API response and throw backend message on failure
       login: async (identifier, password) => {
-        const users = readUsers();
-        const found = users.find(
-          (u) =>
-            (u.email.toLowerCase() === identifier.toLowerCase() ||
-              u.username.toLowerCase() === identifier.toLowerCase()) &&
-            u.password === password
-        );
-        await new Promise((r) => setTimeout(r, 500)); // fake latency
-        if (!found) {
-          throw new Error("Invalid credentials");
+        setLoading(true);
+        try {
+          const res = await loginUser({ email: identifier, password });
+
+          if (!res || res.code !== 200) {
+            const msg = res?.message ?? "Login failed";
+            toast.error(msg);
+            throw new Error(msg);
+          }
+
+          const r = res.result;
+          if (!r || !r.userAccountId) {
+            const msg = res?.message ?? "Invalid login response from server";
+            toast.error(msg);
+            throw new Error(msg);
+          }
+
+          const authUser: AuthUser = {
+            id: r.userAccountId,
+            fullname: r.fullName ?? r.fullName ?? r.email,
+            email: r.email,
+            phonenumber: r.phoneNumber ?? undefined,
+          };
+
+          localStorage.setItem(SESSION_KEY, JSON.stringify(authUser));
+          setUser(authUser);
+        } catch (err: any) {
+          if (axios.isAxiosError(err)) {
+            const data = err.response?.data;
+            const msg = data?.message ?? err.message ?? "Network error";
+            throw new Error(msg);
+          }
+          throw new Error(err?.message ?? "Login failed");
+        } finally {
+          setTimeout(() => setLoading(false), 800);
         }
-        const authUser: AuthUser = {
-          id: found.id,
-          username: found.username,
-          email: found.email,
-        };
-        localStorage.setItem(SESSION_KEY, JSON.stringify(authUser));
-        setUser(authUser);
-        router.replace("/");
       },
-      register: async ({ username, email, password }) => {
-        const users = readUsers();
-        const exists = users.some(
-          (u) => u.email.toLowerCase() === email.toLowerCase()
-        );
-        await new Promise((r) => setTimeout(r, 500));
-        if (exists) throw new Error("Email already registered");
-        const newUser = {
-          id: String(Date.now()),
-          username,
-          email,
-          password,
-        };
-        writeUsers([...users, newUser]);
-        // after register, send to login
-        router.replace("/login");
+
+      // REGISTER: keep toast + redirect
+      register: async ({ fullname, email, password, phonenumber }: NewUser) => {
+        setLoading(true);
+        try {
+          const res = await registerUser({
+            fullname,
+            email,
+            password,
+            phonenumber,
+          });
+          if (!res || res.code !== 200) {
+            const msg = res?.message ?? "Registration failed";
+            toast.error(msg);
+            throw new Error(msg);
+          }
+          toast.success("Account created successfully. Please sign in.");
+          router.replace("/login");
+        } catch (err: any) {
+          if (axios.isAxiosError(err)) {
+            const data = err.response?.data;
+            const msg = data?.message ?? err.message ?? "Network error";
+            throw new Error(msg);
+          }
+          throw new Error(err?.message ?? "Registration failed");
+        } finally {
+          setTimeout(() => setLoading(false), 800);
+        }
       },
+
       logout: () => {
         localStorage.removeItem(SESSION_KEY);
         setUser(null);
@@ -125,7 +135,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, loading, router]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <>
+      {loading && <FullScreenLoader message="Loading..." />}
+      <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    </>
+  );
 }
 
 export function useAuth() {

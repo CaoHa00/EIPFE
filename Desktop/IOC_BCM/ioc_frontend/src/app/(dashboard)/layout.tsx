@@ -4,6 +4,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import UserMenu from "./_components/userMenu";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function DashboardLayout({
   children,
@@ -31,13 +32,15 @@ export default function DashboardLayout({
 
       {showGlobalHeader && (
         <header className="flex items-center justify-between px-10 py-6 backdrop">
-          <Image
-            src="/icon/BecamexLogo.svg"
-            alt="Becamex"
-            width={200}
-            height={200}
-            priority
-          />
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/icon/BecamexLogo.svg"
+              alt="Becamex"
+              width={200}
+              height={200}
+              priority
+            />
+          </Link>
           <UserMenu />
         </header>
       )}
