@@ -8,7 +8,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { loginUser, registerUser } from "@/app/(auth)/services/auth";
 import type { NewUser } from "@/app/(auth)/types/user";
 import axios from "axios";
@@ -35,6 +35,7 @@ const SESSION_KEY = "session.user";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,6 +52,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      const publicRoutes = ["/login", "/register"];
+      const isPublic = publicRoutes.includes(pathname);
+
+      if (!user && !isPublic) {
+        router.replace("/login");
+      } else if (user && isPublic) {
+        router.replace("/");
+      }
+    }
+  }, [user, pathname, loading, router]);
 
   const value = useMemo<AuthContextType>(
     () => ({
@@ -129,18 +143,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout: () => {
         localStorage.removeItem(SESSION_KEY);
         setUser(null);
+        toast.success("Logged out successfully!");
         router.replace("/login");
       },
     }),
     [user, loading, router]
   );
 
-  return (
-    <>
-      {loading && <FullScreenLoader message="Loading..." />}
-      <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-    </>
-  );
+  if (loading) {
+    return <FullScreenLoader message="Loading..." />;
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
