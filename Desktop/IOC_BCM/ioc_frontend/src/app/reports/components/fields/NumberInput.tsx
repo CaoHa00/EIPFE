@@ -6,9 +6,10 @@ type Props = {
   value?: number | string;
   onChange: (v: number) => void;
   required?: boolean;
+  error?: string;
   name?: string;
 };
-export default function NumberInput({ label, value = "", onChange, required, name }: Props) {
+export default function NumberInput({ label, value = "", onChange, required, name, error }: Props) {
   const isEmptyProp =
     value === null ||
     value === undefined ||
@@ -57,8 +58,10 @@ export default function NumberInput({ label, value = "", onChange, required, nam
             }
           }
         }}
-        className="w-full h-11 rounded-lg  border-none   outline-none focus:ring-0 bg-gray-100"
+        aria-invalid={!!error}
+        className={`w-full h-11 rounded-lg  border-none   outline-none focus:ring-0 bg-gray-100 ${error ? "ring-1 ring-red-500" : ""}`}
       />
+      {error && <div className="mt-1 text-xs text-red-600">{error}</div>}
     </label>
   );
 }
