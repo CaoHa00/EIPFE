@@ -4,9 +4,8 @@
 import { useCallback, useState } from "react";
 import { registerUser, loginUser } from "@/app/(auth)/services/auth";
 import type { NewUser } from "@/app/(auth)/types/user";
-import type { CreateUserResult, LoginResult } from "@/app/(auth)/services/auth";
-
-type ApiResult<T> = { code: number; message: string; result: T };
+import type { CreateUserResult, LoginResult } from "@/app/(auth)/types/user";
+import { ApiResponse } from "@/types/api";
 
 /** useRegister: returns execute(payload) and status */
 export function useRegister() {
@@ -21,7 +20,7 @@ export function useRegister() {
       if (res.code !== 200) {
         throw new Error(res.message || "Registration failed");
       }
-      return res as ApiResult<CreateUserResult>;
+      return res as ApiResponse<CreateUserResult>;
     } catch (err: any) {
       setError(err?.message ?? "Registration failed");
       throw err;
@@ -47,7 +46,7 @@ export function useLogin() {
         if (res.code !== 200) {
           throw new Error(res.message || "Login failed");
         }
-        return res as ApiResult<LoginResult>;
+        return res as ApiResponse<LoginResult>;
       } catch (err: any) {
         setError(err?.message ?? "Login failed");
         throw err;

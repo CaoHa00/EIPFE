@@ -110,6 +110,7 @@ export default function LoginForm() {
                   ? "border-red-400/60 focus:border-red-300"
                   : "border-white/15 focus:border-white/30",
               ].join(" ")}
+              placeholder="Your Password"
             />
             <button
               type="button"
@@ -140,14 +141,11 @@ export default function LoginForm() {
           <ArrowRight className="h-5 w-5" />
         </button>
 
-        <div className="text-right text-sm text-white/80">
-          <Link
-            href="/forgot-password"
-            className="underline-offset-4 hover:underline"
-          >
+        {/* <div className="text-right text-sm text-white/80">
+          <Link href="#" className="underline-offset-4 hover:underline">
             Forgot password?
           </Link>
-        </div>
+        </div> */}
       </form>
     </>
   );
