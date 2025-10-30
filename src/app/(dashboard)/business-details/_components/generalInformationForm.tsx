@@ -208,7 +208,7 @@ export default function GeneralInformationForm() {
 
           {/* conditional seasonal period input */}
           {form.operatingFrequency === "seasonal" && (
-            <input
+            <textarea
               value={form.seasonalPeriod || ""}
               onChange={(e) => handleChange("seasonalPeriod", e.target.value)}
               placeholder="Operational Period (Seasonal)"
