@@ -7,7 +7,7 @@ type Card = { title: string; subtitle: string; href: string };
 
 const cards: Card[] = [
   { title: "Calendar", subtitle: "Coming Soon", href: "#" },
-  { title: "Report", subtitle: "", href: "/report" },
+  { title: "Report", subtitle: "", href: "/reports" },
   { title: "Analytics", subtitle: "Coming Soon", href: "#" },
 ];
 
