@@ -3,10 +3,10 @@ import { z } from "zod";
 // Enum tần suất hoạt động
 const OperatingFrequency = z.enum(["Thường xuyên", "Theo mùa"] as const);
 
-// Helper: chấp nhận NaN từ NumberInput (khi ô trống) và báo lỗi thân thiện
-const NonNegNumber = z.preprocess(
-  (v) => (typeof v === "number" && Number.isNaN(v) ? undefined : v),
-  z.number({ invalid_type_error: "Vui lòng nhập số hợp lệ" }).min(0, ">= 0")
+// Helper: chấp nhận giá trị số >= 0; tránh lỗi khi NumberInput gửi NaN
+const NonNegNumber = z.custom<number>(
+  (v) => typeof v === "number" && Number.isFinite(v) && v >= 0,
+  "Vui lòng nhập số >= 0"
 );
 
 export const Step1Schema = z
@@ -85,4 +85,3 @@ export const Step1Schema = z
   });
 
 export type Step1 = z.infer<typeof Step1Schema>;
-

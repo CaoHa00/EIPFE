@@ -137,11 +137,11 @@ export default function Report5APage() {
           dataCompletenessAssessment_2: "",
           exceedParamsAndTime_2: "",
         },
-        env_incident_prevention_6x: {
-          planPrevention: "",
-          measuresAtSite: "",
-          responseActions: "",
-        },
+        // env_incident_prevention_6x: {
+        //   planPrevention: "",
+        //   measuresAtSite: "",
+        //   responseActions: "",
+        // },
       },
       step4: {
         sw_general_note: "",
