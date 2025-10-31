@@ -5,13 +5,15 @@ import NumberInput from "../fields/NumberInput";
 import SelectInput from "../fields/SelectInput";
 import FileUpload from "../fields/FileUpload";
 import Textarea from "../fields/Textarea";
+import DateInput from "../fields/DateInput";
 
 type FieldProps =
   | ({ kind: "text" } & Parameters<typeof TextInput>[0])
   | ({ kind: "number" } & Parameters<typeof NumberInput>[0])
   | ({ kind: "select" } & Parameters<typeof SelectInput>[0])
   | ({ kind: "file" } & Parameters<typeof FileUpload>[0])
-  | ({ kind: "textarea" } & Parameters<typeof Textarea>[0]);
+  | ({ kind: "textarea" } & Parameters<typeof Textarea>[0])
+  | ({ kind: "date" } & Parameters<typeof DateInput>[0]);
 
 export default function FormField(props: FieldProps) {
   switch (props.kind) {
@@ -22,6 +24,10 @@ export default function FormField(props: FieldProps) {
     case "number": {
       const { kind, ...rest } = props as Extract<FieldProps, { kind: "number" }>;
       return <NumberInput {...rest} />;
+    }
+    case "date": {
+      const { kind, ...rest } = props as Extract<FieldProps, { kind: "date" }>;
+      return <DateInput {...rest} />;
     }
     case "select": {
       const { kind, ...rest } = props as Extract<FieldProps, { kind: "select" }>;

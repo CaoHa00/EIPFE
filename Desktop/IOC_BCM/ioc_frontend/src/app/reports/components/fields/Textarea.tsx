@@ -13,7 +13,7 @@ export default function Textarea({ label, value = "", onChange, required, placeh
   return (
     <label className="block">
       <span className="block mb-1 text-sm font-medium">
-        {label} {required && <span className="text-red-600">*</span>}
+        {label} {required && <span className="text-red-600"></span>}
       </span>
       <textarea
         name={name}

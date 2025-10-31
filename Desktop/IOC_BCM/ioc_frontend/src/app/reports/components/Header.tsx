@@ -44,7 +44,7 @@ export default function ReportHeader() {
       {/* Dòng mô tả */}
       <div className="mt-8">
         <p className="text-xl font-semibold text-gray-800">
-          Hồ Sơ Công tác bảo vệ môi trường năm 2025
+          Hồ Sơ Công tác bảo vệ môi trường năm {new Date().getFullYear()-1}
         </p>
       </div>
 
